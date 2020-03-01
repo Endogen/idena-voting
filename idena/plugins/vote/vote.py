@@ -1,3 +1,4 @@
+import re
 import uuid
 import idena.emoji as emo
 import idena.utils as utl
@@ -8,7 +9,10 @@ from telegram import ReplyKeyboardMarkup, KeyboardButton, ParseMode, ReplyKeyboa
 from telegram.ext import RegexHandler, CommandHandler, ConversationHandler, MessageHandler, Filters
 
 
+# TODO: Add possibility to list current vote and see older votes?
 class Vote(IdenaPlugin):
+
+    DATETIME_REGEX = r"^(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2})+$"
 
     QUESTION = auto()
     ENDDATE = auto()
@@ -68,18 +72,18 @@ class Vote(IdenaPlugin):
     def enddate(self, bot, update, user_data):
         text = update.message.text
 
-        # TODO: Check if date is valid
-        if not len(text) == 16:
-            msg = "Not a valid date-time. You have to enter " \
-                  "it in this format: YYYY-MM-DD HH:MM"
-            update.message.reply_text(msg, reply_markup=self.keyboard_datetime())
+        if not re.compile(self.DATETIME_REGEX).match(text):
+            update.message.reply_text(
+                "Not a valid date-time. Format to use:\n`YYYY-MM-DD HH:MM`",
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=self.keyboard_datetime())
 
             return self.ENDDATE
 
         user_data["end"] = f"{text}:00"
 
         msg = "OK. Next I need the first option."
-        update.message.reply_text(msg, reply_markup=self.keyboard_finished())
+        update.message.reply_text(msg, reply_markup=self.keyboard_cancel())
 
         return self.OPTION
 
@@ -88,11 +92,11 @@ class Vote(IdenaPlugin):
 
         if text == self.NO_END:
             msg = "OK. Next I need the first option."
+            update.message.reply_text(msg, reply_markup=self.keyboard_cancel())
         else:
             user_data["options"].append(text)
-            msg = "Please send me the next option"
-
-        update.message.reply_text(msg, reply_markup=self.keyboard_finished())
+            msg = "Please send me the next option or press the 'Finished' button"
+            update.message.reply_text(msg, reply_markup=self.keyboard_finished())
 
         return self.OPTION
 
