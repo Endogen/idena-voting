@@ -17,6 +17,7 @@ def is_numeric(string):
 
 
 def esc_md(text):
+    """ Escape markdown characters """
     import re
 
     rep = {"_": "\\_", "*": "\\*", "[": "\\[", "`": "\\`"}
@@ -107,3 +108,16 @@ def get_kw(args, keyword=None, fallback=None):
 def now():
     from datetime import datetime
     return datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+
+
+def generate_eth_wallet():
+    from ecdsa import SigningKey, SECP256k1
+    privkey = SigningKey.generate(curve=SECP256k1)
+    public = privkey.get_verifying_key().to_string()
+
+    import sha3
+    keccak = sha3.keccak_256()
+    keccak.update(public)
+    address = keccak.hexdigest()[24:]
+
+    return {"address": address, "privkey": privkey.to_string().hex()}
