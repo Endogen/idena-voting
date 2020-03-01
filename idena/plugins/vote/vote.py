@@ -127,7 +127,7 @@ class Vote(IdenaPlugin):
             self.execute_sql(sql, uid, option, addr, priv)
 
         msg = f"{emo.CHECK} DONE! Forward the vote to a group.\n" \
-              f"[Add bot to a group](https://t.me/CryptoSpaceRobot?startgroup=vote)"
+              f"[Add bot to a group](https://t.me/{bot.name[1:]}?startgroup={self.get_name()}_{uid})"
         update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
 
         return ConversationHandler.END
