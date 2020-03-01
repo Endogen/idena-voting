@@ -8,6 +8,16 @@ class Start(IdenaPlugin):
 
     @IdenaPlugin.threaded
     def execute(self, bot, update, args):
+        if args:
+            arg = args[0]
+
+            # TODO: Read newly created poll / proposal and post it
+            if arg == "poll":
+                update.message.reply_text("SHOW NEWLY CRATED POLL")
+            elif arg == "proposal":
+                update.message.reply_text("SHOW NEWLY PROPOSAL POLL")
+            return
+
         user = update.effective_user
 
         intro = self.get_resource(self.INTRO_FILE)
