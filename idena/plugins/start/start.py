@@ -9,13 +9,17 @@ class Start(IdenaPlugin):
     @IdenaPlugin.threaded
     def execute(self, bot, update, args):
         if args:
-            arg = args[0]
+            arg_list = args[0].split("_")
+            cmd = arg_list[0]
+            uid = arg_list[1]
 
-            # TODO: Read newly created poll / proposal and post it
-            if arg == "poll":
-                update.message.reply_text("SHOW NEWLY CRATED POLL")
-            elif arg == "proposal":
-                update.message.reply_text("SHOW NEWLY PROPOSAL POLL")
+            if cmd == "vote":
+                # TODO: Create join on options
+                sql = self.get_resource("select_vote.sql")
+                res = self.execute_sql(sql, uid, plugin=cmd)
+                update.message.reply_text(res)
+            elif cmd == "proposal":
+                update.message.reply_text("SHOW PROPOSAL")
             return
 
         user = update.effective_user
