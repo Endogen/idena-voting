@@ -25,6 +25,9 @@ class IdenaPlugin:
         cfg_path = os.path.join(self.get_cfg_path(), f"{self.get_name()}.json")
         self.config = ConfigManager(cfg_path)
 
+        # Create access to IDENA API
+        self.api = IdenaAPI()
+
     def __enter__(self):
         """ This method gets executed before the plugin gets loaded.
         Make sure to return 'self' if you override it """
@@ -102,9 +105,6 @@ class IdenaPlugin:
     def remove_plugin(self, module_name):
         """ Disable a plugin """
         return self._tgb.remove_plugin(module_name)
-
-    def api(self) -> IdenaAPI:
-        return self._tgb.api
 
     def get_global_resource(self, filename):
         """ Return the content of the given file

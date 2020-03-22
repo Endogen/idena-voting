@@ -6,7 +6,6 @@ import idena.emoji as emo
 import idena.utils as utl
 import idena.constants as con
 
-from .api import IdenaAPI
 from importlib import reload
 from zipfile import ZipFile
 from idena.config import ConfigManager
@@ -40,24 +39,6 @@ class TelegramBot:
 
         self.job_queue = self.updater.job_queue
         self.dispatcher = self.updater.dispatcher
-
-        host = self.config.get("idena", "host")
-        port = self.config.get("idena", "port")
-        timeout = self.config.get("idena", "timeout")
-        api_key = self.config.get("idena", "api_key")
-        self.api = IdenaAPI(host, port, timeout, api_key)
-
-        try:
-            node_version = self.api.node_version()
-            if "error" in node_version:
-                msg = f"{emo.ERROR} Couldn't connect to IDENA node on host {host} and port {port}"
-                raise Exception(f"{msg} - Result: {node_version}")
-            else:
-                msg = f"{emo.CHECK} Successfully connected to IDENA node version {node_version['result']}"
-                logging.info(msg)
-        except Exception as e:
-            logging.error(e)
-            raise SystemExit
 
         # Load classes in folder 'plugins'
         self._load_plugins()
