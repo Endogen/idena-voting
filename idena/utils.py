@@ -120,4 +120,4 @@ def generate_eth_wallet():
     keccak.update(public)
     address = keccak.hexdigest()[24:]
 
-    return {"address": address, "privkey": privkey.to_string().hex()}
+    return {"address": f"0x{address}", "privkey": privkey.to_string().hex()}
