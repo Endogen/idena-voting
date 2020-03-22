@@ -10,6 +10,8 @@ from telegram.ext import RegexHandler, CommandHandler, ConversationHandler, Mess
 
 
 # TODO: Add possibility to list current vote and see older votes?
+# TODO: Add periodic job that checks if vote is over (every minute) and if yes, sends result to admins
+# TODO: Display vote first before forwarding it to a group
 class Vote(IdenaPlugin):
 
     DATETIME_REGEX = r"^(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2})+$"
