@@ -135,7 +135,7 @@ class Start(IdenaPlugin):
                 if "." in str(percent):
                     percent = f"{percent:.2f}"
 
-                result += f"\n\n{counter}) {progress}\n{percent}% (Votes: {votes})"
+                result += f"\n{counter}) {progress}\n{percent}% (Votes: {votes})"
 
             bot.answer_callback_query(query.id, result, show_alert=True)
 
