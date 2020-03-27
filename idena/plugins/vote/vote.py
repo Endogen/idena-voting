@@ -9,6 +9,7 @@ from telegram import ReplyKeyboardMarkup, KeyboardButton, ParseMode, ReplyKeyboa
 from telegram.ext import RegexHandler, CommandHandler, ConversationHandler, MessageHandler, Filters
 
 
+# TODO: Restrict option to 100 chars
 # TODO: Add possibility to list current vote and see older votes?
 # TODO: Add periodic job that checks if vote is over (every minute) and if yes, sends result to admins
 # TODO: Display vote first before forwarding it to a group
