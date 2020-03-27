@@ -360,9 +360,8 @@ class IdenaPlugin:
     def private(cls, func):
         """ Decorator for methods that need to be run in a private chat with the bot """
         def _private(self, bot, update, **kwargs):
-            if self.config.get("private"):
-                if bot.get_chat(update.message.chat_id).type == Chat.PRIVATE:
-                    return func(self, bot, update, **kwargs)
+            if bot.get_chat(update.message.chat_id).type == Chat.PRIVATE:
+                return func(self, bot, update, **kwargs)
 
         return _private
 
