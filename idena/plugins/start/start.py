@@ -13,7 +13,7 @@ class Start(IdenaPlugin):
     CMD_VOTE = "vote"
 
     def __enter__(self):
-        self.add_handler(CallbackQueryHandler(self._callback), group=0)
+        self.add_handler(CallbackQueryHandler(self._callback), group=1)
         return self
 
     @IdenaPlugin.threaded
@@ -59,7 +59,7 @@ class Start(IdenaPlugin):
 
                 update.message.reply_text(
                     vote,
-                    reply_markup=self._update_button(cmd, uid),
+                    reply_markup=self._result_button(cmd, uid),
                     parse_mode=ParseMode.MARKDOWN,
                     disable_web_page_preview=True,
                     quote=False)
@@ -91,7 +91,7 @@ class Start(IdenaPlugin):
 
         return counter
 
-    def _update_button(self, cmd, uid):
+    def _result_button(self, cmd, uid):
         menu = utl.build_menu([InlineKeyboardButton("Show Results", callback_data=f"{cmd}_{uid}")])
         return InlineKeyboardMarkup(menu, resize_keyboard=True)
 
