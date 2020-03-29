@@ -1,11 +1,19 @@
-import re
-import uuid
+import logging
 import idena.emoji as emo
 import idena.utils as utl
+import plotly.graph_objects as go
+import plotly.express as px
 
-from enum import auto
+import io
+import plotly
+import pandas as pd
+import plotly.io as pio
+
+from io import BytesIO
+from pandas import DataFrame
+
 from idena.plugin import IdenaPlugin
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode, Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 from telegram.ext import CallbackQueryHandler
 
 
@@ -27,11 +35,11 @@ class Show(IdenaPlugin):
         show_type = args[0].lower()
 
         if show_type == "votes" or show_type == "v":
-            sql = self.get_resource("select_votes.sql")
-            res = self.execute_sql(sql, plugin="vote")
+            sql = self.get_global_resource("select_votes.sql")
+            res = self.execute_global_sql(sql)
         elif show_type == "proposals" or show_type == "p":
-            sql = self.get_resource("select_proposals.sql")
-            res = self.execute_sql(sql, plugin="proposals")
+            sql = self.get_global_resource("select_proposals.sql")
+            res = self.execute_global_sql(sql)
         else:
             update.message.reply_text(
                 self.get_usage(),
@@ -60,9 +68,9 @@ class Show(IdenaPlugin):
         if not str(query.data).startswith(self._PREFIX):
             return
 
-        sql = self.get_resource("select_vote.sql")
+        sql = self.get_global_resource("select_vote.sql")
         rid = str(query.data)[len(self._PREFIX):]
-        res = self.execute_sql(sql, rid, plugin="vote")
+        res = self.execute_global_sql(sql, rid)
 
         if not res["success"]:
             msg = f"{emo.ERROR} Error reading vote"
@@ -71,8 +79,28 @@ class Show(IdenaPlugin):
             self.notify(f"{msg} {rid}")
             return
 
+        total_votes = 0
+        vote_data = list()
+        for op in res["data"]:
+            votes = self.api.valid_trx(op[4])
+            vote_data.append(votes)
+            total_votes += votes
+
+        counter = 0
+        for op in res["data"]:
+            votes = vote_data[counter]
+            counter += 1
+
         options = [option[3] for option in res["data"]]
         question = res["data"][0][2]
+
+        data_canada = px.data.gapminder().query("country == 'Canada'")
+        fig = px.bar(data_canada, x='year', y='pop')
+        #fig.show()
+
+        update.message.reply_photo(
+            photo=io.BufferedReader(BytesIO(pio.to_image(fig, format="jpeg"))),
+            quote=False)
 
         msg = f"Executed"
         bot.answer_callback_query(query.id, msg)
