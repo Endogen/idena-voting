@@ -9,6 +9,7 @@ from telegram import ReplyKeyboardMarkup, KeyboardButton, ParseMode, ReplyKeyboa
 from telegram.ext import RegexHandler, CommandHandler, ConversationHandler, MessageHandler, Filters
 
 
+# TODO: Restrict to 7 options
 # TODO: Restrict option to 100 chars
 # TODO: Add possibility to list current vote and see older votes?
 # TODO: Add periodic job that checks if vote is over (every minute) and if yes, sends result to admins
@@ -26,12 +27,12 @@ class Vote(IdenaPlugin):
     FINISHED = "Finished"
 
     def __enter__(self):
-        if not self.table_exists("options"):
-            sql = self.get_resource("create_options.sql")
-            self.execute_sql(sql)
-        if not self.table_exists("votes"):
-            sql = self.get_resource("create_votes.sql")
-            self.execute_sql(sql)
+        if not self.global_table_exists("options"):
+            sql = self.get_global_resource("create_options.sql")
+            self.execute_global_sql(sql)
+        if not self.global_table_exists("votes"):
+            sql = self.get_global_resource("create_votes.sql")
+            self.execute_global_sql(sql)
 
         self.add_handler(
             ConversationHandler(
@@ -116,10 +117,10 @@ class Vote(IdenaPlugin):
         end = user_data["end"]
 
         # Insert vote into database
-        sql = self.get_resource("insert_vote.sql")
-        self.execute_sql(sql, uid, usr, qst, end)
+        sql = self.get_global_resource("insert_vote.sql")
+        self.execute_global_sql(sql, uid, usr, qst, end)
 
-        sql = self.get_resource("insert_option.sql")
+        sql = self.get_global_resource("insert_option.sql")
 
         for option in user_data["options"]:
             wallet = utl.generate_eth_wallet()
@@ -127,7 +128,7 @@ class Vote(IdenaPlugin):
             priv = wallet["privkey"]
 
             # Insert vote options into database
-            self.execute_sql(sql, uid, option, addr, priv)
+            self.execute_global_sql(sql, uid, option, addr, priv)
 
         link = f"https://t.me/{bot.name[1:]}?startgroup={self.get_name()}_{uid}"
         msg = f"{emo.CHECK} DONE! [Forward this vote to a group]({link})"

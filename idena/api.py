@@ -56,3 +56,17 @@ class IdenaAPI:
                     return True
 
         return False
+
+    def valid_trx_for(self, address):
+        trans = self.transactions_for(address)
+
+        if not trans:
+            return 0
+
+        counter = 0
+        for trx in trans:
+            if trx["type"] == "SendTx":
+                if self.is_verified(trx["from"]):
+                    counter += 1
+
+        return counter

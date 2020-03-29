@@ -24,8 +24,8 @@ class Start(IdenaPlugin):
             uid = arg_list[1]
 
             if cmd == self.CMD_VOTE:
-                sql = self.get_resource("select_vote.sql")
-                res = self.execute_sql(sql, uid, plugin=cmd)
+                sql = self.get_global_resource("select_vote.sql")
+                res = self.execute_global_sql(sql, uid)
 
                 if not res["success"]:
                     error = f"Not possible to post vote: {res['data']}"
@@ -77,20 +77,6 @@ class Start(IdenaPlugin):
 
         update.message.reply_text(intro, parse_mode=ParseMode.MARKDOWN)
 
-    def _nr_of_trx(self, address):
-        trans = self.api.transactions_for(address)
-
-        if not trans:
-            return 0
-
-        counter = 0
-        for trx in trans:
-            if trx["type"] == "SendTx":
-                if self.api.is_verified(trx["from"]):
-                    counter += 1
-
-        return counter
-
     def _result_button(self, cmd, uid):
         menu = utl.build_menu([InlineKeyboardButton("Show Results", callback_data=f"{cmd}_{uid}")])
         return InlineKeyboardMarkup(menu, resize_keyboard=True)
@@ -104,8 +90,8 @@ class Start(IdenaPlugin):
         vote_id = data[1]
 
         if command == self.CMD_VOTE:
-            sql = self.get_resource("select_vote.sql")
-            res = self.execute_sql(sql, vote_id, plugin=command)
+            sql = self.get_global_resource("select_vote.sql")
+            res = self.execute_global_sql(sql, vote_id)
 
             if not res["success"]:
                 error = f"Not possible to retrieve vote data: {res['data']}"
@@ -116,7 +102,7 @@ class Start(IdenaPlugin):
             total_votes = 0
             vote_data = list()
             for op in res["data"]:
-                votes = self._nr_of_trx(op[4])
+                votes = self.api.valid_trx(op[4])
                 vote_data.append(votes)
                 total_votes += votes
 

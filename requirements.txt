@@ -3,3 +3,6 @@ watchdog
 python-telegram-bot==11.1.0
 ecdsa
 pysha3
+pandas
+plotly
+psutil
