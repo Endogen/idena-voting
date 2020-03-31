@@ -2,3 +2,4 @@ SELECT votes.vote_id, creator, question, option, address, privkey, created, endi
 FROM votes
 LEFT JOIN options on votes.vote_id = options.vote_id
 WHERE votes.vote_id = ?
+ORDER BY options.rowid
