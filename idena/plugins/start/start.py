@@ -89,6 +89,7 @@ class Start(IdenaPlugin):
         command = data[0]
         vote_id = data[1]
 
+        # TODO: Create real dictionary with everything: total votes, options with votes and address, question
         if command == self.CMD_VOTE:
             sql = self.get_global_resource("select_vote.sql")
             res = self.execute_global_sql(sql, vote_id)
@@ -102,7 +103,7 @@ class Start(IdenaPlugin):
             total_votes = 0
             vote_data = list()
             for op in res["data"]:
-                votes = self.api.valid_trx(op[4])
+                votes = self.api.valid_trx_for(op[4])
                 vote_data.append(votes)
                 total_votes += votes
 

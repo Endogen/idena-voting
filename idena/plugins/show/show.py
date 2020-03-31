@@ -59,7 +59,7 @@ class Show(IdenaPlugin):
 
     def _show_button(self, row_id):
         data = f"show_{row_id}"
-        menu = utl.build_menu([InlineKeyboardButton("Show Result", callback_data=data)])
+        menu = utl.build_menu([InlineKeyboardButton("Show Results", callback_data=data)])
         return InlineKeyboardMarkup(menu, resize_keyboard=True)
 
     def _callback(self, bot, update):
@@ -82,7 +82,7 @@ class Show(IdenaPlugin):
         total_votes = 0
         vote_data = list()
         for op in res["data"]:
-            votes = self.api.valid_trx(op[4])
+            votes = self.api.valid_trx_for(op[4])
             vote_data.append(votes)
             total_votes += votes
 
@@ -91,8 +91,13 @@ class Show(IdenaPlugin):
             votes = vote_data[counter]
             counter += 1
 
+        print("Vote data:", vote_data)
+
         options = [option[3] for option in res["data"]]
         question = res["data"][0][2]
+
+        print("Options:", options)
+        print("Question:", question)
 
         data_canada = px.data.gapminder().query("country == 'Canada'")
         fig = px.bar(data_canada, x='year', y='pop')
