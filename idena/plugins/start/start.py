@@ -147,6 +147,8 @@ class Start(IdenaPlugin):
 
                 result += f"\n{counter}) {progress}\n{percent}% (Votes: {count})"
 
+            result = f"{result}\n\nTotal Votes: {all['total_votes']}"
+
             bot.answer_callback_query(query.id, result, show_alert=True)
 
         elif command == self.CMD_PROP:
