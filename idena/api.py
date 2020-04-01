@@ -1,6 +1,8 @@
 import requests
 import logging
 
+from datetime import datetime
+
 
 class IdenaAPI:
 
@@ -61,12 +63,15 @@ class IdenaAPI:
         trans = self.transactions_for(address)
 
         if not trans:
-            return 0
+            return list()
 
-        counter = 0
+        data = list()
         for trx in trans:
             if trx["type"] == "SendTx":
                 if self.is_verified(trx["from"]):
-                    counter += 1
+                    dt = datetime.strptime(trx["timestamp"], "%Y-%m-%dT%H:%M:%SZ")
+                    ts = dt.replace().timestamp()
 
-        return counter
+                    data.append({"address": trx["from"], "timestamp": int(ts)})
+
+        return data

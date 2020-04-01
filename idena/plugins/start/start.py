@@ -100,12 +100,15 @@ class Start(IdenaPlugin):
                 self.notify(error)
                 return
 
+            # TODO: Merge list of all trx from all options
+            # TODO: Make sure that just last trx for 'from_addr' is counted
+
             total_votes = 0
             vote_data = list()
             for op in res["data"]:
                 votes = self.api.valid_trx_for(op[4])
                 vote_data.append(votes)
-                total_votes += votes
+                #total_votes += votes
 
             counter = 0
             result = str()
