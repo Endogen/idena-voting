@@ -63,15 +63,19 @@ class IdenaAPI:
         trans = self.transactions_for(address)
 
         if not trans:
-            return list()
+            return dict()
 
-        data = list()
+        votes = dict()
         for trx in trans:
             if trx["type"] == "SendTx":
                 if self.is_verified(trx["from"]):
                     dt = datetime.strptime(trx["timestamp"], "%Y-%m-%dT%H:%M:%SZ")
-                    ts = dt.replace().timestamp()
+                    ts = int(dt.replace().timestamp())
 
-                    data.append({"address": trx["from"], "timestamp": int(ts)})
+                    if trx["from"] in votes:
+                        if ts < votes[trx["from"]]["timestamp"]:
+                            continue
 
-        return data
+                    votes[trx["from"]] = {"option": address, "timestamp": ts}
+
+        return votes

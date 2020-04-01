@@ -1,6 +1,7 @@
 import logging
 import idena.utils as utl
 
+from collections import OrderedDict
 from idena.plugin import IdenaPlugin
 from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackQueryHandler
@@ -89,7 +90,6 @@ class Start(IdenaPlugin):
         command = data[0]
         vote_id = data[1]
 
-        # TODO: Create real dictionary with everything: total votes, options with votes and address, question
         if command == self.CMD_VOTE:
             sql = self.get_global_resource("select_vote.sql")
             res = self.execute_global_sql(sql, vote_id)
@@ -100,23 +100,43 @@ class Start(IdenaPlugin):
                 self.notify(error)
                 return
 
-            # TODO: Merge list of all trx from all options
-            # TODO: Make sure that just last trx for 'from_addr' is counted
+            topic = None
+            vote_data = dict()
+            for op in res["data"]:
+                topic = op[2]
+
+                for key, value in self.api.valid_trx_for(op[4]).items():
+                    if key in vote_data:
+                        if value["timestamp"] < vote_data[key]["timestamp"]:
+                            continue
+
+                    vote_data[key] = value
+
+            all = {
+                "topic": topic,
+                "total_votes": None,
+                "options": OrderedDict()
+            }
 
             total_votes = 0
-            vote_data = list()
-            for op in res["data"]:
-                votes = self.api.valid_trx_for(op[4])
-                vote_data.append(votes)
-                #total_votes += votes
+            for key, value in vote_data.items():
+                total_votes += 1
+
+                if value["option"] in all["options"]:
+                    all["options"][value["option"]] = all["options"][value["option"]].append(key)
+                else:
+                    all["options"][value["option"]] = [key]
+
+            all["total_votes"] = total_votes
 
             counter = 0
             result = str()
-            for op in res["data"]:
-                votes = vote_data[counter]
+            for op, votes in all["options"].items():
                 counter += 1
+                count = len(votes)
 
-                percent = 0 if votes == 0 else (votes/total_votes*100)
+                # TODO: Could be that an option is not in here if nobody sent something...
+                percent = 0 if count == 0 else (count / all["total_votes"] * 100)
                 done = '█' * int(percent / 6.666)
                 progress = f"{done}"
 
@@ -125,7 +145,7 @@ class Start(IdenaPlugin):
                 if "." in str(percent):
                     percent = f"{percent:.2f}"
 
-                result += f"\n{counter}) {progress}\n{percent}% (Votes: {votes})"
+                result += f"\n{counter}) {progress}\n{percent}% (Votes: {count})"
 
             bot.answer_callback_query(query.id, result, show_alert=True)
 
