@@ -1,7 +1,7 @@
 import logging
 import idena.utils as utl
 
-from collections import OrderedDict
+from datetime import datetime
 from idena.plugin import IdenaPlugin
 from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackQueryHandler
@@ -39,7 +39,7 @@ class Start(IdenaPlugin):
                 question = res["data"][0][2]
                 end = res["data"][0][7]
 
-                # TODO: How to link that to a tutorial?
+                # TODO: How to link that to a tutorial? With another button?
                 howto = "Send small amount of DNA to one of the addresses to vote for associated option."
 
                 counter = 0
@@ -82,7 +82,7 @@ class Start(IdenaPlugin):
         menu = utl.build_menu([InlineKeyboardButton("Show Results", callback_data=f"{cmd}_{uid}")])
         return InlineKeyboardMarkup(menu, resize_keyboard=True)
 
-    # TODO: Add timeframe for allowed update
+    # TODO: Add output of all addresses that voted plus on which option
     def _callback(self, bot, update):
         query = update.callback_query
 
@@ -100,22 +100,37 @@ class Start(IdenaPlugin):
                 self.notify(error)
                 return
 
+            logging.info(f"Raw data: {res['data']}")
+
             topic = None
+            ending = None
             vote_data = dict()
+
             for op in res["data"]:
-                topic = op[2]
+                if not topic:
+                    topic = op[2]
+                    ending = op[7]
 
                 for key, value in self.api.valid_trx_for(op[4]).items():
+                    dt = datetime.strptime(ending, "%Y-%m-%d %H:%M:%S")
+                    if value["timestamp"] > int(dt.replace().timestamp()):
+                        logging.info(f"Vote not counted. Too old: {key} {value}")
+                        continue
+
                     if key in vote_data:
                         if value["timestamp"] < vote_data[key]["timestamp"]:
+                            logging.info(f"Vote not counted. New available: {key} {value}")
                             continue
 
                     vote_data[key] = value
 
+            logging.info(f"Vote Data: {vote_data}")
+
             all = {
                 "topic": topic,
+                "ending": ending,
                 "total_votes": None,
-                "options": OrderedDict()
+                "options": dict()
             }
 
             total_votes = 0
@@ -129,14 +144,16 @@ class Start(IdenaPlugin):
 
             all["total_votes"] = total_votes
 
-            counter = 0
+            logging.info(f"All Votes: {all}")
+
+            option_nr = 0
             result = str()
             for op, votes in all["options"].items():
-                counter += 1
-                count = len(votes)
+                option_nr += 1
+                nr_of_votes = len(votes)
 
                 # TODO: Could be that an option is not in here if nobody sent something...
-                percent = 0 if count == 0 else (count / all["total_votes"] * 100)
+                percent = 0 if nr_of_votes == 0 else (nr_of_votes / all["total_votes"] * 100)
                 done = '█' * int(percent / 6.666)
                 progress = f"{done}"
 
@@ -145,7 +162,7 @@ class Start(IdenaPlugin):
                 if "." in str(percent):
                     percent = f"{percent:.2f}"
 
-                result += f"\n{counter}) {progress}\n{percent}% (Votes: {count})"
+                result += f"\n{option_nr}) {progress}\n{percent}% (Votes: {nr_of_votes})"
 
             result = f"{result}\n\nTotal Votes: {all['total_votes']}"
 
