@@ -90,6 +90,7 @@ class Start(IdenaPlugin):
         command = data[0]
         vote_id = data[1]
 
+        # --- VOTING ---
         if command == self.CMD_VOTE:
             sql = self.get_global_resource("select_vote.sql")
             res = self.execute_global_sql(sql, vote_id)
@@ -138,7 +139,7 @@ class Start(IdenaPlugin):
                 total_votes += 1
 
                 if value["option"] in all["options"]:
-                    all["options"][value["option"]] = all["options"][value["option"]].append(key)
+                    all["options"][value["option"]].append(key)
                 else:
                     all["options"][value["option"]] = [key]
 
@@ -149,6 +150,9 @@ class Start(IdenaPlugin):
             option_nr = 0
             result = str()
             for op, votes in all["options"].items():
+                if not votes:
+                    continue
+
                 option_nr += 1
                 nr_of_votes = len(votes)
 
@@ -168,6 +172,7 @@ class Start(IdenaPlugin):
 
             bot.answer_callback_query(query.id, result, show_alert=True)
 
+        # --- PROPOSAL ---
         elif command == self.CMD_PROP:
             # TODO: Implement
             pass
