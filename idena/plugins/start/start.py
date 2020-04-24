@@ -1,6 +1,7 @@
 import logging
 import idena.utils as utl
 
+from collections import OrderedDict
 from datetime import datetime
 from idena.plugin import IdenaPlugin
 from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
@@ -82,7 +83,6 @@ class Start(IdenaPlugin):
         menu = utl.build_menu([InlineKeyboardButton("Show Results", callback_data=f"{cmd}_{uid}")])
         return InlineKeyboardMarkup(menu, resize_keyboard=True)
 
-    # TODO: Add output of all addresses that voted plus on which option
     def _callback(self, bot, update):
         query = update.callback_query
 
@@ -101,21 +101,26 @@ class Start(IdenaPlugin):
                 self.notify(error)
                 return
 
-            logging.info(f"Raw data: {res['data']}")
+            logging.info(f"Raw: {res['data']}")
 
-            topic = None
-            ending = None
+            result = {
+                "topic": None,
+                "ending": None,
+                "total_votes": None,
+                "options": OrderedDict()
+            }
+
             vote_data = dict()
-
             for op in res["data"]:
-                if not topic:
-                    topic = op[2]
-                    ending = op[7]
+                result["topic"] = op[2]
+                result["ending"] = op[7]
+                result["options"][op[4]] = list()
+
+                dt = datetime.strptime(result["ending"], "%Y-%m-%d %H:%M:%S")
 
                 for key, value in self.api.valid_trx_for(op[4]).items():
-                    dt = datetime.strptime(ending, "%Y-%m-%d %H:%M:%S")
-                    if value["timestamp"] > int(dt.replace().timestamp()):
-                        logging.info(f"Vote not counted. Too old: {key} {value}")
+                    if int(value["timestamp"]) > int(dt.replace().timestamp()):
+                        logging.info(f"Vote not counted. Too late: {key} {value}")
                         continue
 
                     if key in vote_data:
@@ -125,39 +130,24 @@ class Start(IdenaPlugin):
 
                     vote_data[key] = value
 
-            logging.info(f"Vote Data: {vote_data}")
-
-            all = {
-                "topic": topic,
-                "ending": ending,
-                "total_votes": None,
-                "options": dict()
-            }
+            logging.info(f"Votes: {vote_data}")
 
             total_votes = 0
             for key, value in vote_data.items():
+                result["options"][value["option"]].append(key)
                 total_votes += 1
 
-                if value["option"] in all["options"]:
-                    all["options"][value["option"]].append(key)
-                else:
-                    all["options"][value["option"]] = [key]
+            result["total_votes"] = total_votes
 
-            all["total_votes"] = total_votes
-
-            logging.info(f"All Votes: {all}")
+            logging.info(f"Result: {result}")
 
             option_nr = 0
-            result = str()
-            for op, votes in all["options"].items():
-                if not votes:
-                    continue
-
+            msg = str()
+            for op, votes in result["options"].items():
                 option_nr += 1
                 nr_of_votes = len(votes)
 
-                # TODO: Could be that an option is not in here if nobody sent something...
-                percent = 0 if nr_of_votes == 0 else (nr_of_votes / all["total_votes"] * 100)
+                percent = 0 if nr_of_votes == 0 else (nr_of_votes / result["total_votes"] * 100)
                 done = '█' * int(percent / 6.666)
                 progress = f"{done}"
 
@@ -166,11 +156,11 @@ class Start(IdenaPlugin):
                 if "." in str(percent):
                     percent = f"{percent:.2f}"
 
-                result += f"\n{option_nr}) {progress}\n{percent}% (Votes: {nr_of_votes})"
+                msg += f"\n{option_nr}) {progress}\n{percent}% (Votes: {nr_of_votes})"
 
-            result = f"{result}\n\nTotal Votes: {all['total_votes']}"
+            msg = f"{msg}\n\nTotal Votes: {result['total_votes']}"
 
-            bot.answer_callback_query(query.id, result, show_alert=True)
+            bot.answer_callback_query(query.id, msg, show_alert=True)
 
         # --- PROPOSAL ---
         elif command == self.CMD_PROP:
