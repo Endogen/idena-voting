@@ -6,4 +6,4 @@ IDENA Vote
 
 *ONLY VALIDATED IDENTITIES COUNT!*
 
-Vote ends on *{{end}}*
+Vote ends on *{{end}}* UTC
