@@ -38,7 +38,7 @@ class Start(IdenaPlugin):
                 url = self.config.get("explorer_url")
 
                 question = res["data"][0][2]
-                end = res["data"][0][7]
+                end = "[NO END-DATE]" if not res["data"][0][7] else res["data"][0][7]
 
                 # TODO: How to link that to a tutorial? With another button?
                 howto = "Send small amount of DNA to one of the addresses to vote for associated option."
@@ -116,12 +116,14 @@ class Start(IdenaPlugin):
                 result["ending"] = op[7]
                 result["options"][op[4]] = list()
 
-                dt = datetime.strptime(result["ending"], "%Y-%m-%d %H:%M:%S")
+                if result["ending"]:
+                    dt = datetime.strptime(result["ending"], "%Y-%m-%d %H:%M:%S")
 
                 for key, value in self.api.valid_trx_for(op[4]).items():
-                    if int(value["timestamp"]) > int(dt.replace().timestamp()):
-                        logging.info(f"Vote not counted. Too late: {key} {value}")
-                        continue
+                    if result["ending"]:
+                        if int(value["timestamp"]) > int(dt.replace().timestamp()):
+                            logging.info(f"Vote not counted. Too late: {key} {value}")
+                            continue
 
                     if key in vote_data:
                         if value["timestamp"] < vote_data[key]["timestamp"]:
