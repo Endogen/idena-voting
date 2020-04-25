@@ -12,6 +12,8 @@ import plotly.io as pio
 from io import BytesIO
 from pandas import DataFrame
 
+from datetime import datetime
+from collections import OrderedDict
 from idena.plugin import IdenaPlugin
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 from telegram.ext import CallbackQueryHandler
@@ -20,6 +22,8 @@ from telegram.ext import CallbackQueryHandler
 class Show(IdenaPlugin):
 
     _PREFIX = "show_"
+    _TYPE_VOTE = "votes"
+    _TYPE_PROPOSAL = "proposals"
 
     def __enter__(self):
         self.add_handler(CallbackQueryHandler(self._callback), group=0)
@@ -34,10 +38,10 @@ class Show(IdenaPlugin):
 
         show_type = args[0].lower()
 
-        if show_type == "votes" or show_type == "v":
+        if show_type == self._TYPE_VOTE:
             sql = self.get_global_resource("select_votes.sql")
             res = self.execute_global_sql(sql)
-        elif show_type == "proposals" or show_type == "p":
+        elif show_type == self._TYPE_PROPOSAL:
             sql = self.get_global_resource("select_proposals.sql")
             res = self.execute_global_sql(sql)
         else:
@@ -55,10 +59,10 @@ class Show(IdenaPlugin):
         user_id = update.effective_user.id
 
         for data in res["data"]:
-            bot.send_message(user_id, data[2], reply_markup=self._show_button(data[0]))
+            bot.send_message(user_id, data[2], reply_markup=self._show_button(show_type, data[0]))
 
-    def _show_button(self, row_id):
-        data = f"show_{row_id}"
+    def _show_button(self, show_type, row_id):
+        data = f"{self._PREFIX}{show_type}_{row_id}"
         menu = utl.build_menu([InlineKeyboardButton("Show Results", callback_data=data)])
         return InlineKeyboardMarkup(menu, resize_keyboard=True)
 
@@ -68,44 +72,74 @@ class Show(IdenaPlugin):
         if not str(query.data).startswith(self._PREFIX):
             return
 
-        sql = self.get_global_resource("select_vote.sql")
-        rid = str(query.data)[len(self._PREFIX):]
-        res = self.execute_global_sql(sql, rid)
+        show_lst = query.data.split("_")
+        show_type = show_lst[1]
 
-        if not res["success"]:
-            msg = f"{emo.ERROR} Error reading vote"
+        # --- VOTE ---
+        if show_type == self._TYPE_VOTE:
+            sql = self.get_global_resource("select_vote.sql")
+            rid = str(query.data)[len(self._PREFIX):]
+            res = self.execute_global_sql(sql, rid)
+
+            if not res["success"]:
+                msg = f"{emo.ERROR} Error reading vote"
+                bot.answer_callback_query(query.id, msg)
+                update.message.reply_text(f"{msg} {rid}")
+                self.notify(f"{msg} {rid}")
+                return
+
+            result = {
+                "topic": None,
+                "ending": None,
+                "total_votes": None,
+                "options": OrderedDict()
+            }
+
+            vote_data = dict()
+            for op in res["data"]:
+                result["topic"] = op[2]
+                result["ending"] = op[7]
+                result["options"][op[4]] = list()
+
+                if result["ending"]:
+                    dt = datetime.strptime(result["ending"], "%Y-%m-%d %H:%M:%S")
+
+                for key, value in self.api.valid_trx_for(op[4]).items():
+                    if result["ending"]:
+                        if int(value["timestamp"]) > int(dt.replace().timestamp()):
+                            logging.info(f"Vote not counted. Too late: {key} {value}")
+                            continue
+
+                    if key in vote_data:
+                        if value["timestamp"] < vote_data[key]["timestamp"]:
+                            logging.info(f"Vote not counted. New available: {key} {value}")
+                            continue
+
+                    vote_data[key] = value
+
+            logging.info(f"Votes: {vote_data}")
+
+            total_votes = 0
+            for key, value in vote_data.items():
+                result["options"][value["option"]].append(key)
+                total_votes += 1
+
+            result["total_votes"] = total_votes
+
+            logging.info(f"Result: {result}")
+
+            # TODO: Complete
+            data_canada = px.data.gapminder().query("country == 'Canada'")
+            fig = px.bar(data_canada, x='year', y='pop')
+
+            update.message.reply_photo(
+                photo=io.BufferedReader(BytesIO(pio.to_image(fig, format="jpeg"))),
+                quote=False)
+
+            msg = f"Executed"
             bot.answer_callback_query(query.id, msg)
-            update.message.reply_text(f"{msg} {rid}")
-            self.notify(f"{msg} {rid}")
-            return
 
-        total_votes = 0
-        vote_data = list()
-        for op in res["data"]:
-            votes = self.api.valid_trx_for(op[4])
-            vote_data.append(votes)
-            total_votes += votes
-
-        counter = 0
-        for op in res["data"]:
-            votes = vote_data[counter]
-            counter += 1
-
-        print("Vote data:", vote_data)
-
-        options = [option[3] for option in res["data"]]
-        question = res["data"][0][2]
-
-        print("Options:", options)
-        print("Question:", question)
-
-        data_canada = px.data.gapminder().query("country == 'Canada'")
-        fig = px.bar(data_canada, x='year', y='pop')
-        #fig.show()
-
-        update.message.reply_photo(
-            photo=io.BufferedReader(BytesIO(pio.to_image(fig, format="jpeg"))),
-            quote=False)
-
-        msg = f"Executed"
-        bot.answer_callback_query(query.id, msg)
+        # --- PROPOSAL ---
+        if show_type == self._TYPE_PROPOSAL:
+            # TODO: Implement
+            pass
