@@ -1,16 +1,13 @@
 import logging
 import idena.emoji as emo
 import idena.utils as utl
-import plotly.graph_objects as go
 import plotly.express as px
 
 import io
-import plotly
 import pandas as pd
 import plotly.io as pio
 
 from io import BytesIO
-from pandas import DataFrame
 
 from datetime import datetime
 from collections import OrderedDict
@@ -74,18 +71,18 @@ class Show(IdenaPlugin):
 
         show_lst = query.data.split("_")
         show_type = show_lst[1]
+        vote_id = show_lst[2]
 
         # --- VOTE ---
         if show_type == self._TYPE_VOTE:
             sql = self.get_global_resource("select_vote.sql")
-            rid = str(query.data)[len(self._PREFIX):]
-            res = self.execute_global_sql(sql, rid)
+            res = self.execute_global_sql(sql, vote_id)
 
             if not res["success"]:
                 msg = f"{emo.ERROR} Error reading vote"
                 bot.answer_callback_query(query.id, msg)
-                update.message.reply_text(f"{msg} {rid}")
-                self.notify(f"{msg} {rid}")
+                update.message.reply_text(f"{msg} {vote_id}")
+                self.notify(f"{msg} {vote_id}")
                 return
 
             result = {
@@ -128,16 +125,26 @@ class Show(IdenaPlugin):
 
             logging.info(f"Result: {result}")
 
-            # TODO: Complete
-            data_canada = px.data.gapminder().query("country == 'Canada'")
-            fig = px.bar(data_canada, x='year', y='pop')
+            data = {
+                "Options": [],
+                "Votes": []
+            }
 
-            update.message.reply_photo(
+            count = 0
+            for op, op_data in result["options"].items():
+                op_str = res["data"][count][3]
+                data["Options"].append(op_str)
+
+                data["Votes"].append(len(op_data))
+                count += 1
+
+            fig = px.bar(pd.DataFrame(data=data), x="Options", y="Votes", title=result["topic"])
+
+            query.message.reply_photo(
                 photo=io.BufferedReader(BytesIO(pio.to_image(fig, format="jpeg"))),
                 quote=False)
 
-            msg = f"Executed"
-            bot.answer_callback_query(query.id, msg)
+            bot.answer_callback_query(query.id, str())
 
         # --- PROPOSAL ---
         if show_type == self._TYPE_PROPOSAL:
