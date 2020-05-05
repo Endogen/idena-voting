@@ -46,6 +46,7 @@ class IdenaAPI:
 
             skip += steps
 
+        logging.info(f"All tx for {address}: {transactions}")
         return transactions
 
     def is_verified(self, address):
@@ -61,21 +62,18 @@ class IdenaAPI:
 
     def valid_trx_for(self, address):
         trans = self.transactions_for(address)
+        votes = dict()
 
         if not trans:
-            return dict()
+            return votes
 
-        votes = dict()
         for trx in trans:
             if trx["type"] == "SendTx":
                 if self.is_verified(trx["from"]):
                     dt = datetime.strptime(trx["timestamp"], "%Y-%m-%dT%H:%M:%SZ")
-                    ts = int(dt.replace().timestamp())
+                    votes[trx["from"]] = {"option": address, "timestamp": dt}
+                else:
+                    logging.info(f"Vote not counted. Not validated: {trx['from']} {trx}")
 
-                    if trx["from"] in votes:
-                        if ts < votes[trx["from"]]["timestamp"]:
-                            continue
-
-                    votes[trx["from"]] = {"option": address, "timestamp": ts}
-
+        logging.info(f"Valid tx for {address}: {votes}")
         return votes
