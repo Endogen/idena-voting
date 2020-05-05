@@ -50,14 +50,15 @@ class Start(IdenaPlugin):
                     address = op[4]
                     option = op[3]
 
-                    short_addr = f"{address[:12]}...{address[-12:]}"
-                    options += f"\n\n{counter}) {option}\n[{short_addr}]({url}{address})"
+                    options += f"\n\n{counter}) {option}\n[{address}]({url}{address})"
 
                 vote = self.get_resource("vote.md")
                 vote = vote.replace("{{question}}", question)
                 vote = vote.replace("{{options}}", options)
                 vote = vote.replace("{{howto}}", howto)
                 vote = vote.replace("{{end}}", end)
+
+                logging.info(f"Vote created: {vote}")
 
                 update.message.reply_text(
                     vote,
