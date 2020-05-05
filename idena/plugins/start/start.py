@@ -121,7 +121,7 @@ class Start(IdenaPlugin):
 
                 for key, value in self.api.valid_trx_for(op[4]).items():
                     if result["ending"]:
-                        if int(value["timestamp"]) > int(dt.replace().timestamp()):
+                        if value["timestamp"] > dt:
                             logging.info(f"Vote not counted. Too late: {key} {value}")
                             continue
 
