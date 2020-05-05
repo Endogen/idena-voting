@@ -22,16 +22,28 @@ class Show(IdenaPlugin):
     _TYPE_VOTE = "votes"
     _TYPE_PROPOSAL = "proposals"
 
+    show_count = 3
+
     def __enter__(self):
         self.add_handler(CallbackQueryHandler(self._callback), group=0)
         return self
 
     def execute(self, bot, update, args):
-        if not len(args) == 1:
-            update.message.reply_text(
-                self.get_usage(),
-                parse_mode=ParseMode.MARKDOWN)
-            return
+        if len(args) == 2:
+            try:
+                self.show_count = int(args[1])
+            except ValueError:
+                update.message.reply_text(
+                    f"{emo.ERROR} Second command argument needs to be an Integer. "
+                    f"It represents the number of past votes to show",
+                    parse_mode=ParseMode.MARKDOWN)
+                return
+        else:
+            if not len(args) == 1:
+                update.message.reply_text(
+                    self.get_usage(),
+                    parse_mode=ParseMode.MARKDOWN)
+                return
 
         show_type = args[0].lower()
 
@@ -55,8 +67,13 @@ class Show(IdenaPlugin):
 
         user_id = update.effective_user.id
 
-        for data in res["data"]:
+        count = 1
+        for data in reversed(res["data"]):
+            if count > self.show_count:
+                break
+
             bot.send_message(user_id, data[2], reply_markup=self._show_button(show_type, data[0]))
+            count += 1
 
     def _show_button(self, show_type, row_id):
         data = f"{self._PREFIX}{show_type}_{row_id}"
@@ -138,7 +155,17 @@ class Show(IdenaPlugin):
                 data["Votes"].append(len(op_data))
                 count += 1
 
-            fig = px.bar(pd.DataFrame(data=data), x="Options", y="Votes", title=result["topic"])
+            fig = px.bar(
+                pd.DataFrame(data=data),
+                x="Options",
+                y="Votes",
+                title=result["topic"])
+
+            """
+            fig.update_yaxes(
+                tickformat=',d'
+            )
+            """
 
             query.message.reply_photo(
                 photo=io.BufferedReader(BytesIO(pio.to_image(fig, format="jpeg"))),
