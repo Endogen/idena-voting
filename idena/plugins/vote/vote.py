@@ -11,7 +11,6 @@ from telegram.ext import RegexHandler, CommandHandler, ConversationHandler, Mess
 
 # TODO: Restrict to 7 options
 # TODO: Restrict option to 100 chars
-# TODO: Add possibility to list current vote and see older votes?
 # TODO: Add periodic job that checks if vote is over (every minute) and if yes, sends result to admins
 # TODO: Display vote first before forwarding it to a group
 class Vote(IdenaPlugin):
@@ -130,7 +129,7 @@ class Vote(IdenaPlugin):
             # Insert vote options into database
             self.execute_global_sql(sql, uid, option, addr, priv)
 
-        link = f"https://t.me/{bot.name[1:]}?startgroup={self.get_name()}_{uid}"
+        link = f"https://t.me/{bot.name[1:]}?startgroup={uid}"
         msg = f"{emo.CHECK} DONE! [Forward this vote to a group]({link})"
         update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
 

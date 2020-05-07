@@ -1,12 +1,6 @@
-`/{{handle}} votes | proposals [number of past votes to show]`  
 
-Choose to list either votes or proposals  
+List created votes  
+`/{{handle}}`  
 
-For votes execute
-`/{{handle}} votes`  
-
-For proposals execute
-`/{{handle}} proposals`  
-
-You can also choose how many past entries you want to show. Default value is 3.  
-`/{{handle}} votes 5`
+You can also choose how many votes you want to list. Default value is 3.  
+`/{{handle}} 5`
