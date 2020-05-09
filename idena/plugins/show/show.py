@@ -82,6 +82,10 @@ class Show(IdenaPlugin):
 
             count += 1
 
+        if count == 1:
+            msg = f"{emo.INFO} No votes yet"
+            update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN)
+
     def _show_button(self, row_id):
         data = f"{self._PREFIX}{row_id}"
         menu = utl.build_menu([InlineKeyboardButton("Show Results", callback_data=data)])
