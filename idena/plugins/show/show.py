@@ -31,11 +31,12 @@ class Show(IdenaPlugin):
             return
 
         for data in res["data"]:
-            end = datetime.strptime(data[4], "%Y-%m-%d %H:%M:%S")
-            now = datetime.now()
+            if data[4]:
+                end = datetime.strptime(data[4], "%Y-%m-%d %H:%M:%S")
+                now = datetime.now()
 
-            if now < end:
-                self.repeat_job(self._post_results, 0, first=end, context=data[0])
+                if now < end:
+                    self.repeat_job(self._post_results, 0, first=end, context=data[0])
 
         return self
 
