@@ -146,11 +146,12 @@ class Vote(IdenaPlugin):
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=ReplyKeyboardRemove())
 
-        end = datetime.strptime(end, "%Y-%m-%d %H:%M:%S")
-        now = datetime.now()
+        if end:
+            end = datetime.strptime(end, "%Y-%m-%d %H:%M:%S")
+            now = datetime.now()
 
-        if end and now < end:
-            self.repeat_job(self._post_results, 0, first=end, context=uid)
+            if end and now < end:
+                self.repeat_job(self._post_results, 0, first=end, context=uid)
 
         return ConversationHandler.END
 
