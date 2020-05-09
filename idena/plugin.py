@@ -6,7 +6,7 @@ import threading
 import idena.constants as c
 import idena.emoji as emo
 
-from .api import IdenaAPI
+from .idena_api import IdenaAPI
 from pathlib import Path
 from telegram import ChatAction, Chat
 from idena.config import ConfigManager
