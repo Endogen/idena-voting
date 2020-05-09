@@ -1,5 +1,5 @@
 {
     "handle": "vote",
     "category": "Voting",
-    "description": "List current vote or create new one"
+    "description": "Create new vote"
 }
