@@ -262,7 +262,7 @@ class Vote(IdenaPlugin):
                         photo=io.BufferedReader(BytesIO(pio.to_image(fig, format="jpeg"))))
                     bot.send_message(
                         admin,
-                        str(vote_data))
+                        str(vote_data) if vote_data else "No votes")
                 except Exception as e:
                     error = f"Not possible to notify admin id '{admin}' about ended vote"
                     logging.error(f"{error}: {e}")
